@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>114學年度 單字自主學習系統</title>
+    <title>FlashCard</title>
     <style>
         /* 繼承你以往的簡潔風格：圓角、陰影、柔和色調 */
         :root {
@@ -308,7 +308,7 @@
             Object.keys(fullLibrary).forEach(key => {
                 let opt = document.createElement('option');
                 opt.value = key;
-                opt.innerText = "第 " + key + " 單元";
+                opt.innerText = key + " 單元";
                 select.appendChild(opt);
             });
         } catch (e) {
