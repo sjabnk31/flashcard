@@ -259,10 +259,12 @@
 
             <div id="mode-spelling" class="hidden" style="width: 100%;">
                 <h2 id="sp-zh" style="color: #444;">解釋</h2>
+                <div id="sp-result-display" style="font-size: 1.5rem; margin-bottom: 15px; min-height: 1.8rem; font-family: monospace;"></div>
+                
                 <p id="sp-hint" style="letter-spacing: 3px; color: #888; font-family: monospace;"></p>
                 <input type="text" id="sp-input" placeholder="請輸入單字拼音" autocomplete="off">
+                <button class="primary-btn" onclick="checkSpellingManual()" style="margin-top:10px; background: #6c757d;">核對拼字</button>
             </div>
-
             <div id="mode-grammar" class="hidden" style="width: 100%;">
                 <p id="gr-sen" style="font-size: 1.1rem; line-height: 1.5; background: #f9f9f9; padding: 15px; border-radius: 8px;"></p>
                 <div class="options-grid" id="gr-opts"></div>
@@ -342,6 +344,42 @@
         render();
     }
 
+    function checkSpellingManual() {
+        const input = document.getElementById('sp-input').value.trim();
+        const correct = currentBank[currentIndex].word;
+        const resultDisplay = document.getElementById('sp-result-display');
+        
+        let htmlContent = "";
+        
+        // 逐字比對
+        for (let i = 0; i < correct.length; i++) {
+            const charCorrect = correct[i];
+            const charInput = input[i] || ""; // 如果學生還沒打到那，就是空字串
+    
+            if (charInput === "") {
+                // 尚未輸入的部分顯示底線
+                htmlContent += `<span style="color: #ccc;">_</span>`;
+            } else if (charInput.toLowerCase() === charCorrect.toLowerCase()) {
+                // 對的顯示綠色
+                htmlContent += `<span style="color: var(--success-color);">${charInput}</span>`;
+            } else {
+                // 錯的顯示紅色
+                htmlContent += `<span style="color: var(--error-color); text-decoration: underline;">${charInput}</span>`;
+            }
+        }
+    
+        resultDisplay.innerHTML = htmlContent;
+    
+        // 如果完全正確，給予視覺回饋
+        if (input.toLowerCase() === correct.toLowerCase()) {
+            document.getElementById('info-msg').innerText = "太棒了，完全正確！✨";
+            document.getElementById('info-msg').style.color = "var(--success-color)";
+        } else {
+            document.getElementById('info-msg').innerText = "檢查看看紅色的地方喔！";
+            document.getElementById('info-msg').style.color = "var(--error-color)";
+        }
+    }
+    
     function switchMode(mode) {
         currentMode = mode;
         // 切換 Tab UI
