@@ -3,64 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>單字學習系統</title>
+    <title>AI 單字學習系統 - 專業版</title>
     <style>
         :root {
             --primary: #4a90e2;
             --secondary: #f39c12;
             --success: #27ae60;
             --danger: #e74c3c;
-            --bg: #f5f7fa;
+            --bg: #f0f2f5;
+            --text: #333;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
             background-color: var(--bg);
+            color: var(--text);
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            margin: 0;
         }
 
-        /* 模式切換按鈕 */
-        .nav {
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 { text-align: center; color: var(--primary); }
+
+        /* 設定區塊 */
+        .setup-section {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        input[type="text"], select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        /* 模式切換 */
+        .mode-nav {
+            display: flex;
+            justify-content: space-around;
             margin-bottom: 20px;
         }
 
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
+        .mode-btn {
+            padding: 10px 15px;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 20px;
             cursor: pointer;
-            background: white;
+            font-weight: bold;
             transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        button.active {
+        .mode-btn.active {
             background: var(--primary);
             color: white;
         }
 
-        /* 內容容器 */
-        #game-container {
-            width: 100%;
-            max-width: 500px;
-            min-height: 350px;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            display: grid;
-            place-items: center;
-            text-align: center;
-        }
+        /* 內容顯示區 */
+        #game-area { min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-        /* 1. 閃卡樣式 */
+        /* 閃卡樣式 */
         .card {
-            width: 300px;
+            width: 100%;
             height: 200px;
             perspective: 1000px;
             cursor: pointer;
@@ -74,9 +96,7 @@
             transform-style: preserve-3d;
         }
 
-        .card.is-flipped .card-inner {
-            transform: rotateY(180deg);
-        }
+        .card.is-flipped .card-inner { transform: rotateY(180deg); }
 
         .card-face {
             position: absolute;
@@ -84,175 +104,288 @@
             height: 100%;
             backface-visibility: hidden;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            border-radius: 10px;
+            border-radius: 15px;
             border: 2px solid var(--primary);
+            font-size: 2rem;
+            background: white;
         }
 
         .card-back {
             background: var(--primary);
             color: white;
             transform: rotateY(180deg);
-            flex-direction: column;
             font-size: 1.2rem;
-            padding: 10px;
+            padding: 20px;
+            text-align: center;
         }
 
-        /* 2. & 3. 拼字與選擇題樣式 */
-        input[type="text"] {
-            padding: 10px;
-            font-size: 1.2rem;
-            width: 80%;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-
+        /* 拼字與選擇題 */
         .options-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
             width: 100%;
+            margin-top: 20px;
         }
 
-        .option-btn {
-            background: #f8f9fa;
-            border: 1px solid #ddd;
+        .opt-btn {
             padding: 15px;
-            border-radius: 8px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
         }
 
-        .option-btn:hover { background: #e9ecef; }
+        .opt-btn:hover { background: #eef5ff; border-color: var(--primary); }
 
-        .feedback { margin-top: 15px; font-weight: bold; }
+        .feedback { margin-top: 15px; font-weight: bold; height: 24px; }
         .hidden { display: none !important; }
+
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #result-screen { text-align: center; }
     </style>
 </head>
 <body>
 
-    <div class="nav">
-        <button onclick="switchMode('flashcard')" id="btn-flashcard" class="active">閃卡</button>
-        <button onclick="switchMode('spelling')" id="btn-spelling">拼字</button>
-        <button onclick="switchMode('grammar')" id="btn-grammar">文法</button>
+<div class="container">
+    <h1>學英語助手</h1>
+
+    <div class="setup-section" id="setup-area">
+        <input type="text" id="student-name" placeholder="請輸入你的姓名">
+        <select id="unit-select">
+            <option value="">載入中...</option>
+        </select>
+        <button class="action-btn" onclick="startPractice()">開始練習</button>
     </div>
 
-    <div id="game-container">
-        <div id="mode-flashcard" class="mode-section">
-            <div class="card" onclick="this.classList.toggle('is-flipped')">
-                <div class="card-inner">
-                    <div class="card-face card-front" id="fc-front">word</div>
-                    <div class="card-face card-back">
-                        <div id="fc-back-zh">解釋</div>
-                        <div id="fc-example" style="font-size: 0.9rem; margin-top: 10px;">例句</div>
+    <div id="practice-area" class="hidden">
+        <div class="mode-nav">
+            <button class="mode-btn active" onclick="switchMode('flashcard', this)">閃卡</button>
+            <button class="mode-btn" onclick="switchMode('spelling', this)">拼字</button>
+            <button class="mode-btn" onclick="switchMode('grammar', this)">文法</button>
+        </div>
+
+        <div id="game-area">
+            <div id="m-flashcard" class="mode-content" style="width: 100%;">
+                <div class="card" onclick="this.classList.toggle('is-flipped')">
+                    <div class="card-inner">
+                        <div class="card-face card-front" id="fc-word">Word</div>
+                        <div class="card-face card-back">
+                            <div id="fc-zh" style="font-weight: bold;">解釋</div>
+                            <div id="fc-ex" style="font-size: 0.9rem; margin-top: 15px; opacity: 0.9;">例句</div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <button onclick="nextQuestion()" style="margin-top: 20px;">下一個</button>
-        </div>
 
-        <div id="mode-spelling" class="mode-section hidden">
-            <h2 id="sp-zh">解釋</h2>
-            <p id="sp-hint">_ _ _ _ _</p>
-            <input type="text" id="sp-input" placeholder="請拼出單字" autocomplete="off">
-            <div id="sp-feedback" class="feedback"></div>
-            <button onclick="checkSpelling()">檢查</button>
-        </div>
+            <div id="m-spelling" class="mode-content hidden">
+                <h3 id="sp-zh">解釋</h3>
+                <p id="sp-hint" style="letter-spacing: 5px; color: #666;"></p>
+                <input type="text" id="sp-input" placeholder="請拼出單字" style="width: 100%; box-sizing: border-box;">
+                <button class="action-btn" onclick="checkSpelling()">檢查答案</button>
+            </div>
 
-        <div id="mode-grammar" class="mode-section hidden">
-            <p id="gr-sentence" style="font-size: 1.2rem; line-height: 1.6;">句子載入中...</p>
-            <div class="options-grid" id="gr-options"></div>
-            <div id="gr-feedback" class="feedback"></div>
+            <div id="m-grammar" class="mode-content hidden" style="width: 100%;">
+                <p id="gr-sen" style="font-size: 1.1rem; line-height: 1.6;"></p>
+                <div class="options-grid" id="gr-opts"></div>
+            </div>
+
+            <div id="feedback-msg" class="feedback"></div>
+            <button id="next-btn" class="action-btn" style="background: var(--primary);" onclick="nextQuestion()">下一個題目</button>
+            <button id="submit-btn" class="action-btn hidden" onclick="finishPractice()">結束並提交紀錄</button>
         </div>
     </div>
 
-    <script>
-        const wordBank = [
-            { word: "persistent", zh: "堅持不懈的", sentence: "She is _______ in her efforts to learn coding.", options: ["persistent", "persistence", "persistently", "persisted"], correct: 0 },
-            { word: "innovative", zh: "創新的", sentence: "The company is known for its _______ designs.", options: ["innovation", "innovative", "innovated", "innovatively"], correct: 1 },
-            { word: "evaluate", zh: "評估", sentence: "We need to _______ the results of the experiment.", options: ["evaluation", "evaluating", "evaluate", "evaluated"], correct: 2 }
-        ];
+    <div id="result-screen" class="hidden">
+        <h2 style="color: var(--success);">完成練習！</h2>
+        <div id="final-stats" style="line-height: 2; margin: 20px 0; text-align: left; background: #f9f9f9; padding: 15px; border-radius: 10px;"></div>
+        <button class="action-btn" onclick="location.reload()">再練習一次</button>
+    </div>
+</div>
 
-        let currentIndex = 0;
-        let currentMode = 'flashcard';
+<script>
+    // --- 配置區域 ---
+    const API_URL = "你的_GOOGLE_APPS_SCRIPT_URL"; 
+    
+    let library = {};
+    let wordBank = [];
+    let currentIndex = 0;
+    let currentMode = 'flashcard';
+    let currentUnit = '';
 
-        function switchMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-section').forEach(s => s.classList.add('hidden'));
-            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(`mode-${mode}`).classList.remove('hidden');
-            document.getElementById(`btn-${mode}`).classList.add('active');
-            renderContent();
-        }
+    // 統計數據
+    let score = 0;
+    let totalAttempts = 0;
+    let wrongWords = new Set();
 
-        function renderContent() {
-            const data = wordBank[currentIndex];
-            // 重置回饋訊息
-            document.querySelectorAll('.feedback').forEach(f => f.innerText = '');
-            
-            if (currentMode === 'flashcard') {
-                document.querySelector('.card').classList.remove('is-flipped');
-                document.getElementById('fc-front').innerText = data.word;
-                document.getElementById('fc-back-zh').innerText = data.zh;
-                document.getElementById('fc-example').innerText = data.sentence.replace('_______', data.word);
-            } 
-            else if (currentMode === 'spelling') {
-                document.getElementById('sp-zh').innerText = data.zh;
-                document.getElementById('sp-hint').innerText = data.word[0] + ' _ '.repeat(data.word.length - 1);
-                document.getElementById('sp-input').value = '';
-            } 
-            else if (currentMode === 'grammar') {
-                document.getElementById('gr-sentence').innerText = data.sentence;
-                const optContainer = document.getElementById('gr-options');
-                optContainer.innerHTML = '';
-                data.options.forEach((opt, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'option-btn';
-                    btn.innerText = opt;
-                    btn.onclick = () => checkGrammar(index);
-                    optContainer.appendChild(btn);
+    // 1. 初始化抓取資料
+    window.onload = function() {
+        fetch(`${API_URL}?mode=flashcard`)
+            .then(res => res.json())
+            .then(data => {
+                library = data;
+                const select = document.getElementById('unit-select');
+                select.innerHTML = '';
+                Object.keys(library).forEach(unit => {
+                    let opt = document.createElement('option');
+                    opt.value = unit;
+                    opt.innerText = unit;
+                    select.appendChild(opt);
                 });
-            }
+            })
+            .catch(err => alert("資料載入失敗，請檢查 API 權限或 URL"));
+    };
+
+    function startPractice() {
+        const name = document.getElementById('student-name').value;
+        if (!name) return alert("請輸入姓名後再開始");
+        
+        currentUnit = document.getElementById('unit-select').value;
+        wordBank = library[currentUnit];
+        
+        document.getElementById('setup-area').classList.add('hidden');
+        document.getElementById('practice-area').classList.remove('hidden');
+        renderContent();
+    }
+
+    // 2. 切換模式邏輯
+    function switchMode(mode, btn) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`m-${mode}`).classList.remove('hidden');
+        
+        // 切換模式時重置回饋與進度按鈕
+        document.getElementById('feedback-msg').innerText = '';
+        renderContent();
+    }
+
+    // 3. 渲染題目內容
+    function renderContent() {
+        const item = wordBank[currentIndex];
+        document.getElementById('feedback-msg').innerText = '';
+        
+        // 判斷是否為最後一題
+        if (currentIndex === wordBank.length - 1) {
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('submit-btn').classList.remove('hidden');
         }
 
-        function checkSpelling() {
-            const input = document.getElementById('sp-input').value.trim().toLowerCase();
-            const correct = wordBank[currentIndex].word.toLowerCase();
-            const feedback = document.getElementById('sp-feedback');
-            
-            if (input === correct) {
-                feedback.innerText = "太棒了！正確答案。";
-                feedback.style.color = "var(--success)";
-                setTimeout(nextQuestion, 1500);
-            } else {
-                feedback.innerText = "再試一次！";
-                feedback.style.color = "var(--danger)";
-            }
+        if (currentMode === 'flashcard') {
+            document.querySelector('.card').classList.remove('is-flipped');
+            document.getElementById('fc-word').innerText = item.word;
+            document.getElementById('fc-zh').innerText = item.zh;
+            document.getElementById('fc-ex').innerText = item.sentence.replace('_______', item.word);
+        } 
+        else if (currentMode === 'spelling') {
+            document.getElementById('sp-zh').innerText = item.zh;
+            document.getElementById('sp-input').value = '';
+            document.getElementById('sp-hint').innerText = item.word[0] + ' _'.repeat(item.word.length - 1);
         }
-
-        function checkGrammar(selectedIndex) {
-            const correct = wordBank[currentIndex].correct;
-            const feedback = document.getElementById('gr-feedback');
-            
-            if (selectedIndex === correct) {
-                feedback.innerText = "正確！句子拼湊完整了。";
-                feedback.style.color = "var(--success)";
-                setTimeout(nextQuestion, 1500);
-            } else {
-                feedback.innerText = "不對喔，再想一下詞性。";
-                feedback.style.color = "var(--danger)";
-            } 
+        else if (currentMode === 'grammar') {
+            document.getElementById('gr-sen').innerText = item.sentence;
+            const optBox = document.getElementById('gr-opts');
+            optBox.innerHTML = '';
+            item.options.forEach((opt, idx) => {
+                let b = document.createElement('button');
+                b.className = 'opt-btn';
+                b.innerText = opt;
+                b.onclick = () => checkGrammar(idx);
+                optBox.appendChild(b);
+            });
         }
+    }
 
-        function nextQuestion() {
-            currentIndex = (currentIndex + 1) % wordBank.length;
+    // 4. 判斷邏輯
+    function checkSpelling() {
+        totalAttempts++;
+        const input = document.getElementById('sp-input').value.trim().toLowerCase();
+        const correct = wordBank[currentIndex].word.toLowerCase();
+        const msg = document.getElementById('feedback-msg');
+        
+        if (input === correct) {
+            score++;
+            msg.innerText = "答對了！✅";
+            msg.style.color = "var(--success)";
+        } else {
+            wrongWords.add(wordBank[currentIndex].word);
+            msg.innerText = "再試試看 ❌";
+            msg.style.color = "var(--danger)";
+        }
+    }
+
+    function checkGrammar(idx) {
+        totalAttempts++;
+        const correct = wordBank[currentIndex].correct;
+        const msg = document.getElementById('feedback-msg');
+        
+        if (idx === correct) {
+            score++;
+            msg.innerText = "正確答案！✅";
+            msg.style.color = "var(--success)";
+        } else {
+            wrongWords.add(wordBank[currentIndex].word);
+            msg.innerText = "選錯囉 ❌";
+            msg.style.color = "var(--danger)";
+        }
+    }
+
+    function nextQuestion() {
+        if (currentIndex < wordBank.length - 1) {
+            currentIndex++;
             renderContent();
         }
+    }
 
-        // 初始渲染
-        renderContent();
-    </script>
+    // 5. 結束並上傳紀錄
+    function finishPractice() {
+        const name = document.getElementById('student-name').value;
+        const accuracy = totalAttempts > 0 ? ((score / totalAttempts) * 100).toFixed(1) + "%" : "0%";
+        const wrongList = Array.from(wrongWords).join(", ");
+
+        const payload = {
+            name: name,
+            unit: currentUnit,
+            accuracy: accuracy,
+            wrongList: wrongList || "無"
+        };
+
+        document.getElementById('submit-btn').innerText = "上傳中...";
+
+        fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            document.getElementById('practice-area').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-stats').innerHTML = `
+                <strong>姓名：</strong> ${name}<br>
+                <strong>練習單元：</strong> ${currentUnit}<br>
+                <strong>總嘗試次數：</strong> ${totalAttempts}<br>
+                <strong>正確率：</strong> ${accuracy}<br>
+                <strong>錯誤單字：</strong> ${wrongList || "恭喜全對！"}
+            `;
+        });
+    }
+</script>
+
 </body>
 </html>
