@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單字學習系統</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --secondary: #f39c12;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --bg: #f5f7fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 模式切換按鈕 */
+        .nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: white;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 內容容器 */
+        #game-container {
+            width: 100%;
+            max-width: 500px;
+            min-height: 350px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: grid;
+            place-items: center;
+            text-align: center;
+        }
+
+        /* 1. 閃卡樣式 */
+        .card {
+            width: 300px;
+            height: 200px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card.is-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border-radius: 10px;
+            border: 2px solid var(--primary);
+        }
+
+        .card-back {
+            background: var(--primary);
+            color: white;
+            transform: rotateY(180deg);
+            flex-direction: column;
+            font-size: 1.2rem;
+            padding: 10px;
+        }
+
+        /* 2. & 3. 拼字與選擇題樣式 */
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1.2rem;
+            width: 80%;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .option-btn:hover { background: #e9ecef; }
+
+        .feedback { margin-top: 15px; font-weight: bold; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="nav">
+        <button onclick="switchMode('flashcard')" id="btn-flashcard" class="active">閃卡</button>
+        <button onclick="switchMode('spelling')" id="btn-spelling">拼字</button>
+        <button onclick="switchMode('grammar')" id="btn-grammar">文法</button>
+    </div>
+
+    <div id="game-container">
+        <div id="mode-flashcard" class="mode-section">
+            <div class="card" onclick="this.classList.toggle('is-flipped')">
+                <div class="card-inner">
+                    <div class="card-face card-front" id="fc-front">word</div>
+                    <div class="card-face card-back">
+                        <div id="fc-back-zh">解釋</div>
+                        <div id="fc-example" style="font-size: 0.9rem; margin-top: 10px;">例句</div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="nextQuestion()" style="margin-top: 20px;">下一個</button>
+        </div>
+
+        <div id="mode-spelling" class="mode-section hidden">
+            <h2 id="sp-zh">解釋</h2>
+            <p id="sp-hint">_ _ _ _ _</p>
+            <input type="text" id="sp-input" placeholder="請拼出單字" autocomplete="off">
+            <div id="sp-feedback" class="feedback"></div>
+            <button onclick="checkSpelling()">檢查</button>
+        </div>
+
+        <div id="mode-grammar" class="mode-section hidden">
+            <p id="gr-sentence" style="font-size: 1.2rem; line-height: 1.6;">句子載入中...</p>
+            <div class="options-grid" id="gr-options"></div>
+            <div id="gr-feedback" class="feedback"></div>
+        </div>
+    </div>
+
+    <script>
+        const wordBank = [
+            { word: "persistent", zh: "堅持不懈的", sentence: "She is _______ in her efforts to learn coding.", options: ["persistent", "persistence", "persistently", "persisted"], correct: 0 },
+            { word: "innovative", zh: "創新的", sentence: "The company is known for its _______ designs.", options: ["innovation", "innovative", "innovated", "innovatively"], correct: 1 },
+            { word: "evaluate", zh: "評估", sentence: "We need to _______ the results of the experiment.", options: ["evaluation", "evaluating", "evaluate", "evaluated"], correct: 2 }
+        ];
+
+        let currentIndex = 0;
+        let currentMode = 'flashcard';
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-section').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`mode-${mode}`).classList.remove('hidden');
+            document.getElementById(`btn-${mode}`).classList.add('active');
+            renderContent();
+        }
+
+        function renderContent() {
+            const data = wordBank[currentIndex];
+            // 重置回饋訊息
+            document.querySelectorAll('.feedback').forEach(f => f.innerText = '');
+            
+            if (currentMode === 'flashcard') {
+                document.querySelector('.card').classList.remove('is-flipped');
+                document.getElementById('fc-front').innerText = data.word;
+                document.getElementById('fc-back-zh').innerText = data.zh;
+                document.getElementById('fc-example').innerText = data.sentence.replace('_______', data.word);
+            } 
+            else if (currentMode === 'spelling') {
+                document.getElementById('sp-zh').innerText = data.zh;
+                document.getElementById('sp-hint').innerText = data.word[0] + ' _ '.repeat(data.word.length - 1);
+                document.getElementById('sp-input').value = '';
+            } 
+            else if (currentMode === 'grammar') {
+                document.getElementById('gr-sentence').innerText = data.sentence;
+                const optContainer = document.getElementById('gr-options');
+                optContainer.innerHTML = '';
+                data.options.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.innerText = opt;
+                    btn.onclick = () => checkGrammar(index);
+                    optContainer.appendChild(btn);
+                });
+            }
+        }
+
+        function checkSpelling() {
+            const input = document.getElementById('sp-input').value.trim().toLowerCase();
+            const correct = wordBank[currentIndex].word.toLowerCase();
+            const feedback = document.getElementById('sp-feedback');
+            
+            if (input === correct) {
+                feedback.innerText = "太棒了！正確答案。";
+                feedback.style.color = "var(--success)";
+                setTimeout(nextQuestion, 1500);
+            } else {
+                feedback.innerText = "再試一次！";
+                feedback.style.color = "var(--danger)";
+            }
+        }
+
+        function checkGrammar(selectedIndex) {
+            const correct = wordBank[currentIndex].correct;
+            const feedback = document.getElementById('gr-feedback');
+            
+            if (selectedIndex === correct) {
+                feedback.innerText = "正確！句子拼湊完整了。";
+                feedback.style.color = "var(--success)";
+                setTimeout(nextQuestion, 1500);
+            } else {
+                feedback.innerText = "不對喔，再想一下詞性。";
+                feedback.style.color = "var(--danger)";
+            } 
+        }
+
+        function nextQuestion() {
+            currentIndex = (currentIndex + 1) % wordBank.length;
+            renderContent();
+        }
+
+        // 初始渲染
+        renderContent();
+    </script>
+</body>
+</html>
