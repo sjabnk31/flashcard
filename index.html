@@ -316,15 +316,27 @@
         }
     };
 
+    // Fisher-Yates Shuffle 洗牌演算法
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    
     function startApp() {
         const name = document.getElementById('student-name').value.trim();
         const unit = document.getElementById('unit-select').value;
         if (!name || !unit) return alert("請完整填寫姓名與單元");
-
+    
         results.name = name;
         results.unit = unit;
-        currentBank = fullLibrary[unit];
+    
+        // --- 修改這裡：先複製一份資料再洗牌，避免影響到原始資料 ---
+        currentBank = shuffle([...fullLibrary[unit]]); 
         
+        currentIndex = 0; // 確保從第一題開始
         document.getElementById('setup-view').classList.add('hidden');
         document.getElementById('quiz-view').classList.remove('hidden');
         render();
